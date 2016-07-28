@@ -1,0 +1,17 @@
+.task-view {
+  > .nav-tabs li {
+    cursor: pointer;
+  }
+
+  > .tab-content > .tab-pane {
+    padding-top: 20px;
+  }
+}
+
+.task-view > .nav-tabs li {
+  cursor: pointer;
+}
+
+.task-view > .tab-content > .tab-pane {
+  padding-top: 20px;
+}

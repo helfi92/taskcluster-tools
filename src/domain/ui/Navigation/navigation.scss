@@ -1,0 +1,22 @@
+#navbar {
+  .navbar-brand > img {
+    display: inline;
+  }
+
+  nav.navbar-inverse {
+    .navbar-brand {
+      color: #00d8ff;
+      padding-top: 0;
+      line-height: 50px;
+    }
+
+    .navbar-text {
+      color: #fff;
+    }
+  }
+}
+
+#signin-alert {
+  right: 0;
+  margin-left: 35px;
+}

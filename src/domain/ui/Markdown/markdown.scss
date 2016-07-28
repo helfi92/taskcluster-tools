@@ -1,0 +1,12 @@
+@import "~highlight.js/styles/github.css";
+
+.markdown-view {
+  // Set margin of last paragraph to zero
+  > p:last-of-type {
+    margin: 0;
+  }
+
+  code {
+    color: #2C3638;
+  }
+}

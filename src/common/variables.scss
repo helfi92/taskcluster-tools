@@ -1,0 +1,10 @@
+@import "~bootstrap-sass/assets/stylesheets/bootstrap/_variables.scss";
+
+$icon-font-path: "~bootstrap-sass/assets/fonts/bootstrap/";
+$text-color: lighten($gray-dark, 6%);
+$font-size-base: 15px;
+
+@import "~font-awesome/scss/_variables.scss";
+
+$fa-font-path: "~font-awesome/fonts";
+$taskcluster-color: #00D8FF;
