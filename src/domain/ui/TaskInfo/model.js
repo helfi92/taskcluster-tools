@@ -2,6 +2,7 @@ import R from 'ramda';
 import confirmActionButton from '../ConfirmAction/model';
 import retriggerButton from '../RetriggerButton/model';
 import purgeCacheButton from '../PurgeCacheButton/model';
+import loanerButtons from '../LoanerButtons/model';
 
 export const taskStatusStateLabel = {
   unscheduled: 'label label-default',
@@ -23,9 +24,9 @@ export const purgeCacheModel = (model) => ({
 });
 
 /**
- * retriggerModel :: Object -> Object
+ * taskButtonModel :: Object -> Object
  */
-export const retriggerModel = R.pick(['taskcluster', 'task']);
+export const taskButtonModel = R.pick(['taskcluster', 'task']);
 
 export default (model = {}) => R.merge({
   taskcluster: null,
@@ -36,6 +37,8 @@ export default (model = {}) => R.merge({
   label: taskStatusStateLabel.unscheduled,
   confirmScheduleTask: confirmActionButton(),
   confirmCancelTask: confirmActionButton(),
-  retriggerButton: retriggerButton(retriggerModel(model)),
+  confirmEditTask: confirmActionButton(),
+  loanerButtons: loanerButtons(taskButtonModel(model)),
+  retriggerButton: retriggerButton(taskButtonModel(model)),
   purgeCacheButton: purgeCacheButton(purgeCacheModel(model))
 }, model);

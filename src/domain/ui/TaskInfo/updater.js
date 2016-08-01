@@ -6,6 +6,7 @@ import init, { taskStatusStateLabel } from './model';
 import confirmActionUpdater from '../ConfirmAction/updater';
 import retriggerButtonUpdater from '../RetriggerButton/updater';
 import purgeCacheButtonUpdater from '../PurgeCacheButton/updater';
+import loanerButtonsUpdater from '../LoanerButtons/updater';
 
 /**
  * isResolved :: a -> Boolean
@@ -19,8 +20,10 @@ export const SCHEDULE_TASK = 'SCHEDULE_TASK';
 export const CANCEL_TASK = 'CANCEL_TASK';
 export const RETRIGGER_BUTTON = 'TASK_INFO_RETRIGGER_BUTTON';
 export const PURGE_CACHE_BUTTON = 'TASK_INFO_PURGE_CACHE_BUTTON';
+export const LOANER_BUTTONS = 'TASK_INFO_LOANER_BUTTON';
 export const CONFIRM_SCHEDULE_TASK = 'TASK_INFO_CONFIRM_SCHEDULE_TASK';
 export const CONFIRM_CANCEL_TASK = 'TASK_INFO_CONFIRM_CANCEL_TASK';
+export const CONFIRM_EDIT_TASK = 'TASK_INFO_CONFIRM_EDIT_TASK';
 
 function* queueScheduleTask() {
 
@@ -38,8 +41,10 @@ function* load() {
   yield [
     put({ type: CONFIRM_SCHEDULE_TASK }),
     put({ type: CONFIRM_CANCEL_TASK }),
+    put({ type: CONFIRM_EDIT_TASK }),
     put(wrapAction({ type: TASK_UPDATE, payload: task }, RETRIGGER_BUTTON)),
-    put(wrapAction({ type: TASK_UPDATE, payload: task }, PURGE_CACHE_BUTTON))
+    put(wrapAction({ type: TASK_UPDATE, payload: task }, PURGE_CACHE_BUTTON)),
+    put(wrapAction({ type: TASK_UPDATE, payload: task }, LOANER_BUTTONS))
   ]
 }
 
@@ -55,10 +60,14 @@ export default new Updater(init(), listener)
     confirmActionUpdater(model.confirmScheduleTask, action), model))
   .case(CONFIRM_CANCEL_TASK, (model, action) => R.assoc('confirmCancelTask',
     confirmActionUpdater(model.confirmCancelTask, action), model))
+  .case(CONFIRM_EDIT_TASK, (model, action) => R.assoc('confirmEditTask',
+    confirmActionUpdater(model.confirmEditTask, action), model))
   .case(RETRIGGER_BUTTON, (model, action) => R.assoc('retriggerButton',
     retriggerButtonUpdater(model.retriggerButton, action), model))
   .case(PURGE_CACHE_BUTTON, (model, action) => R.assoc('purgeCacheButton',
     purgeCacheButtonUpdater(model.purgeCacheButton, action), model))
+  .case(LOANER_BUTTONS, (model, action) => R.assoc('loanerButtons',
+    loanerButtonsUpdater(model.loanerButtons, action), model))
   .case(LOAD_INFO, (model, { payload }) => R.merge(model, {
     taskStatus: payload,
     taskLoaded: false,

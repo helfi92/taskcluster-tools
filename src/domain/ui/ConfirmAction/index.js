@@ -10,7 +10,7 @@ export default view(({ dispatch, children, model, ...props }) => {
   const executeAction = () => dispatch({ type: 'EXECUTE_ACTION', payload: props.action });
 
   return (
-    <Button bsSize={props.buttonSize} bsStyle={props.buttonStyle} disabled={props.disabled} onClick={openModal}>
+    <Button {...props} onClick={openModal}>
       <Glyphicon glyph={props.glyph} /> <span>{props.label}</span>
       <Modal bsStyle="primary" show={model.showDialog} onHide={closeModal}>
         <Modal.Header closeButton={true}>{props.label}</Modal.Header>
@@ -36,7 +36,7 @@ export default view(({ dispatch, children, model, ...props }) => {
           {(() => {
             if (!model.executing || !model.result) {
               return (
-                <Button onClick={executeAction} bsStyle={props.buttonStyle} hidden={!!model.result}>
+                <Button onClick={executeAction} bsStyle={props.bsStyle} hidden={!!model.result}>
                   <Glyphicon glyph={props.glyph} /> <span>{props.label}</span>
                 </Button>
               );

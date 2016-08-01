@@ -5,15 +5,19 @@ import { Link } from 'react-router';
 import Spinner from '../Spinner';
 import Markdown from '../Markdown';
 import ConfirmAction from '../ConfirmAction';
+import LoanerButtons from '../LoanerButtons';
 import RetriggerButton from '../RetriggerButton';
 import PurgeCacheButton from '../PurgeCacheButton';
+import DateView from '../DateView';
+import Highlight from '../Highlight';
+import RunLocallyScript from './RunLocallyScript';
 import {
   PURGE_CACHE_BUTTON,
   RETRIGGER_BUTTON,
+  LOANER_BUTTONS,
   CONFIRM_SCHEDULE_TASK,
-  SCHEDULE_TASK,
-  CANCEL_TASK,
-  CONFIRM_CANCEL_TASK
+  CONFIRM_CANCEL_TASK,
+  CONFIRM_EDIT_TASK
 } from './updater';
 
 import './index.scss';
@@ -42,8 +46,9 @@ export default view(({ model, dispatch }) => {
 
   const { task, taskStatus, label } = model;
   const { metadata } = task;
-  const scheduleTask = () => dispatch({ type: SCHEDULE_TASK });
-  const cancelTask = () => dispatch({ type: CANCEL_TASK });
+  const scheduleTask = () => dispatch({ type: CONFIRM_SCHEDULE_TASK });
+  const cancelTask = () => dispatch({ type: CONFIRM_CANCEL_TASK });
+  const editTask = () => dispatch({ type: CONFIRM_EDIT_TASK });
 
   return (
     <span className="task-info">
@@ -85,8 +90,8 @@ export default view(({ model, dispatch }) => {
           <ConfirmAction
             model={model.confirmScheduleTask}
             dispatch={forwardTo(dispatch, CONFIRM_SCHEDULE_TASK)}
-            buttonSize="xsmall"
-            buttonStyle="primary"
+            bsSize="xsmall"
+            bsStyle="primary"
             disabled={taskStatus.state !== 'unscheduled'}
             glyph="play"
             label="Schedule Task"
@@ -99,13 +104,13 @@ export default view(({ model, dispatch }) => {
           <RetriggerButton
             model={model.retriggerButton}
             dispatch={forwardTo(dispatch, RETRIGGER_BUTTON)}
-            buttonStyle="success"
-            buttonSize="xsmall" />
+            bsStyle="success"
+            bsSize="xsmall" />
           <ConfirmAction
             model={model.confirmCancelTask}
             dispatch={forwardTo(dispatch, CONFIRM_CANCEL_TASK)}
-            buttonSize="xsmall"
-            buttonStyle="danger"
+            bsSize="xsmall"
+            bsStyle="danger"
             disabled={isResolved(taskStatus.state)}
             glyph="stop"
             label="Cancel Task"
@@ -120,194 +125,124 @@ export default view(({ model, dispatch }) => {
             dispatch={forwardTo(dispatch, PURGE_CACHE_BUTTON)} />
         </dd>
       </dl>
+
+      <dl className="dl-horizontal">
+        <dt>Created</dt>
+        <dd><DateView id="task-created-dateview" date={task.created} /></dd>
+
+        <dt>Deadline</dt>
+        <dd><DateView id="task-deadline-dateview" date={task.deadline} since={task.created} /></dd>
+      </dl>
+
+      <dl className="dl-horizontal">
+        <dt>ProvisionerId</dt>
+        <dd><code>{task.provisionerId}</code></dd>
+
+        <dt>WorkerType</dt>
+        <dd><code>{task.workerType}</code></dd>
+      </dl>
+
+      <dl className="dl-horizontal">
+        <dt>SchedulerId</dt>
+        <dd><code>{task.schedulerId}</code></dd>
+
+        <dt>TaskGroupId</dt>
+        <dd>
+          <Link to={`/task-group-inspector/${task.taskGroupId}`}>{task.taskGroupId}</Link>
+        </dd>
+
+        <dt>Dependencies</dt>
+        <dd>
+          {
+            !task.dependencies.length ?
+              '-' :
+              (
+                <ul>
+                  {task.dependencies.map((dependency, index) => (
+                    <li key={index}><Link to={`/task-inspector/${dependency}`}>{dependency}</Link></li>
+                  ))}
+                </ul>
+              )
+          }
+        </dd>
+
+        <dt>Requires</dt>
+        <dd>
+          This task will be scheduled when <em>dependencies</em> are
+          <span>
+            <code>{task.requires === 'all-completed' ? 'all-completed' : 'all-resolved'}</code>
+            {task.required === 'all-completed' ? 'successfully' : 'with any resolution'}.
+          </span>
+        </dd>
+      </dl>
+
+      <dl className="dl-horizontal">
+        <dt>Scopes</dt>
+        <dd>
+          {
+            !task.scopes.length ?
+              '-' :
+              <ul>{task.scopes.map((scope, index) => <li key={index}><code>{scope}</code></li>)}</ul>
+          }
+        </dd>
+
+        <dt>Routes</dt>
+        <dd>
+          {
+            !task.routes.length ?
+              '-' :
+              <ul>{task.routes.map((route, index) => <li key={index}><code>{route}</code></li>)}</ul>
+          }
+        </dd>
+      </dl>
+
+      <dl className="dl-horizontal">
+        <dt>Task Definition</dt>
+        <dd>
+          <a href={`https://queue.taskcluster.net/v1/task/${taskStatus.taskId}`} target="_blank">
+            {taskStatus.taskId} <i className="fa fa-external-link" />
+          </a>
+        </dd>
+
+        <dt>Payload</dt>
+        <dd><Highlight language="json">{JSON.stringify(task.payload, null, 2)}</Highlight></dd>
+
+        <dt>Debug</dt>
+        <dd className="debug-actions">
+          <ConfirmAction
+            model={model.confirmEditTask}
+            dispatch={forwardTo(dispatch, CONFIRM_EDIT_TASK)}
+            bsSize="small"
+            bsStyle="default"
+            glyph="edit"
+            label="Edit and Re-create"
+            success="Opening Task Creator"
+            action={editTask}>
+              Are you sure you wish to edit this task?
+              <p>
+                Note that the edited task will not be linked to other tasks or have the same <code>task.routes</code>
+                as other tasks, so this is not a way to "fix" a failing task in a larger task graph. Note that you may
+                also not have the scopes required to create the resulting task.
+              </p>
+          </ConfirmAction>
+          <LoanerButtons
+            model={model.loanerButtons}
+            dispatch={forwardTo(dispatch, LOANER_BUTTONS)}
+            bsStyle="default"
+            bsSize="small" />
+        </dd>
+      </dl>
+
+      <dl className="dl-horizontal">
+        <dt>Run Locally</dt>
+        <dd>
+          <Highlight language="bash">
+            {RunLocallyScript({ taskId: taskStatus.taskId, payload: task.payload })}
+          </Highlight>
+        </dd>
+      </dl>
     </span>
   );
-
-  // return this.renderWaitFor('task') || (
-  //     <span>
-  //     ...
-  //     <dl className="dl-horizontal">
-  //       <dt>State</dt>
-  //       <dd>
-  //         <span className={taskStateLabel[status.state]}>
-  //           {status.state}
-  //         </span>
-  //       </dd>
-  //       <dt>Retries Left</dt>
-  //       <dd>{status.retriesLeft} of {task.retries}</dd>
-  //       <dt>Actions</dt>
-  //       <dd>
-  //         <ConfirmAction buttonSize="xsmall"
-  //                        buttonStyle="primary"
-  //                        disabled={status.state !== 'unscheduled'}
-  //                        glyph="play"
-  //                        label="Schedule Task"
-  //                        action={this.scheduleTask}
-  //                        success="Successfully scheduled task!">
-  //           Are you sure you wish to schedule the task?
-  //           This will <b>overwrite any scheduling process</b> taking place,
-  //           if this task is part of a continous integration process scheduling
-  //           this task may cause your code to land with broken tests.
-  //         </ConfirmAction>&nbsp;
-  //         <RetriggerButton task={this.state.task}
-  //                          taskId={status.taskId}
-  //                          buttonStyle="success"
-  //                          buttonSize="xsmall"/>&nbsp;
-  //         <ConfirmAction buttonSize="xsmall"
-  //                        buttonStyle="danger"
-  //                        disabled={isResolved}
-  //                        glyph="stop"
-  //                        label="Cancel Task"
-  //                        action={this.cancelTask}
-  //                        success="Successfully canceled task!">
-  //           Are you sure you wish to cancel this task?
-  //           Notice that another process or developer may still be able to
-  //           schedule a rerun. But all existing runs will be aborted and any
-  //           scheduling process will not be able to schedule the task.
-  //         </ConfirmAction>&nbsp;
-  //         <PurgeCacheButton caches={_.keys(((task || {}).payload || {}).cache || {})}
-  //                           provisionerId={task.provisionerId}
-  //                           workerType={task.workerType}/>&nbsp;
-  //       </dd>
-  //     </dl>
-  //     <dl className="dl-horizontal">
-  //       <dt>Created</dt>
-  //       <dd>
-  //         <format.DateView date={task.created}/>
-  //       </dd>
-  //       <dt>Deadline</dt>
-  //       <dd>
-  //         <format.DateView date={task.deadline} since={task.created}/>
-  //       </dd>
-  //     </dl>
-  //     <dl className="dl-horizontal">
-  //       <dt>ProvisionerId</dt>
-  //       <dd><code>{task.provisionerId}</code></dd>
-  //       <dt>WorkerType</dt>
-  //       <dd><code>{task.workerType}</code></dd>
-  //     </dl>
-  //     <dl className="dl-horizontal">
-  //       <dt>SchedulerId</dt>
-  //       <dd><code>{task.schedulerId}</code></dd>
-  //       <dt>TaskGroupId</dt>
-  //       <dd>
-  //         <a href={'../task-group-inspector/#' + task.taskGroupId}>
-  //           {task.taskGroupId}
-  //         </a>
-  //       </dd>
-  //       <dt>Dependencies</dt>
-  //       <dd>
-  //         {
-  //           task.dependencies.length > 0 ? (
-  //             <ul>
-  //               {
-  //                 task.dependencies.map((dep, index) => {
-  //                   return (
-  //                     <li key={index}>
-  //                       <a href={'../task-inspector/#' + dep}>{dep}</a>
-  //                     </li>
-  //                   );
-  //                 })
-  //               }
-  //             </ul>
-  //           ) : (
-  //             '-'
-  //           )
-  //         }
-  //       </dd>
-  //       <dt>Requires</dt>
-  //       <dd>
-  //         This task will be scheduled when <i>dependencies</i> are
-  //         {
-  //           task.requires === 'all-completed' ?
-  //             <span> <code>all-completed</code> successfully</span>
-  //             :
-  //             <span> <code>all-resolved</code> with any resolution</span>
-  //         }
-  //         .
-  //       </dd>
-  //     </dl>
-  //     <dl className="dl-horizontal">
-  //       <dt>Scopes</dt>
-  //       <dd>
-  //         {
-  //           task.scopes.length > 0 ? (
-  //             <ul>
-  //               {
-  //                 task.scopes.map((scope, index) => {
-  //                   return <li key={index}><code>{scope}</code></li>;
-  //                 })
-  //               }
-  //             </ul>
-  //           ) : (
-  //             '-'
-  //           )
-  //         }
-  //       </dd>
-  //       <dt>Routes</dt>
-  //       <dd>
-  //         {
-  //           task.routes.length > 0 ? (
-  //             <ul>
-  //               {
-  //                 task.routes.map((route, index) => {
-  //                   return <li key={index}><code>{route}</code></li>
-  //                 })
-  //               }
-  //             </ul>
-  //           ) : (
-  //             '-'
-  //           )
-  //         }
-  //       </dd>
-  //     </dl>
-  //     <dl className="dl-horizontal">
-  //       <dt>Task Definition</dt>
-  //       <dd>
-  //         <a href={'https://queue.taskcluster.net/v1/task/' + status.taskId}
-  //            target="_blank">
-  //           {status.taskId}
-  //           &nbsp;
-  //           <i className="fa fa-external-link"></i>
-  //         </a>
-  //       </dd>
-  //       <dt>Payload</dt>
-  //       <dd>
-  //         <format.Code language='json'>
-  //           {JSON.stringify(task.payload, undefined, 2)}
-  //         </format.Code>
-  //       </dd>
-  //       <dt>Debug</dt>
-  //       <dd>
-  //         <ConfirmAction buttonSize="small"
-  //                        buttonStyle="default"
-  //                        glyph="edit"
-  //                        label="Edit and Re-create"
-  //                        action={this.editTask}
-  //                        success="Opening Task Creator">
-  //           Are you sure you wish to edit this task?<br/>
-  //           Note that the edited task will not be linked to other tasks or
-  //           have the same <code>task.routes</code> as other tasks,
-  //           so this is not a way to "fix" a failing task in a larger task graph.
-  //           Note that you may also not have the scopes required to create the
-  //           resulting task.
-  //         </ConfirmAction>&nbsp;
-  //         <LoanerButton task={this.state.task}
-  //                       taskId={status.taskId}
-  //                       buttonStyle="default"
-  //                       buttonSize="small"/>&nbsp;
-  //       </dd>
-  //     </dl>
-  //     <dl className="dl-horizontal">
-  //       <dt>Run Locally</dt>
-  //       <dd>
-  //         <format.Code language='bash'>
-  //           {this.renderRunLocallyScript()}
-  //         </format.Code>
-  //       </dd>
-  //     </dl>
-  //     </span>
-  //   );
 });
 
 
