@@ -7,6 +7,7 @@ import { browserHistory } from 'react-router';
 import init from './model';
 
 export const CREATE_TASK = 'CREATE_TASK';
+const TASK_UPDATE = 'TASK_UPDATE';
 
 function* createTask() {
   const { task, taskcluster } = yield select();
@@ -33,4 +34,5 @@ function* listener() {
 }
 
 export default new Updater(init(), listener)
+  .case(TASK_UPDATE, (model, { payload }) => R.assoc('task', payload, model))
   .toReducer();

@@ -7,7 +7,7 @@ import Icon from '../Icon';
 export default ({ model }) => {
   const menuItems = model
     .map((group, gi) => group.map((page, i) => (
-      <MenuItem key={`group-${gi}-menu-${i}`} href={page.path}>
+      <MenuItem key={`group-${gi}-menu-${i}`} href={page.path.replace(/\(([^)]+)\)/, '')}>
         <Icon fixedWidth={true} name={page.icon || 'wrench'} />&nbsp;&nbsp;{page.title}
       </MenuItem>
     )))

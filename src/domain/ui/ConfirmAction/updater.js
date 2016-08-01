@@ -4,18 +4,12 @@ import { takeEvery } from 'redux-saga';
 import { call, select, put, fork } from 'redux-saga/effects';
 import init from './model';
 
-/**
- * getAction :: Object -> Function
- */
-const getAction = R.prop('action');
-
-function* executeAction() {
+function* executeAction({ payload }) {
   yield put({ type: 'START_EXECUTING' });
-
-  const action = yield select(getAction);
-  const payload = yield call(action);
-
-  yield put({ type: 'DONE_EXECUTING', payload });
+  yield put({
+    type: 'DONE_EXECUTING',
+    payload: yield call(payload)
+  });
 }
 
 function* listener() {

@@ -9,6 +9,7 @@ export const PURGE = 'PURGE';
 export const UPDATE = 'UPDATE';
 export const CONFIRM_ACTION = 'CONFIRM_ACTION';
 const UPDATE_SELECTED = 'UPDATE_SELECTED';
+const TASK_UPDATE = 'TASK_UPDATE';
 
 /**
  * notEquals :: a -> b -> Boolean
@@ -46,4 +47,9 @@ export default new Updater(init(), listener)
     confirmActionUpdater(model.confirmAction, action),
     model))
   .case(UPDATE_SELECTED, (model, { payload }) => R.assoc('selected', payload, model))
+  .case(TASK_UPDATE, (model, { payload }) => R.merge(model, {
+    caches: R.keys(R.pathOr({}, ['payload', 'cache'], payload)),
+    provisionerId: payload.provisionerId,
+    workerType: payload.workerType
+  }))
   .toReducer();

@@ -45,8 +45,6 @@ export default view(({ model, dispatch }) => {
   const scheduleTask = () => dispatch({ type: SCHEDULE_TASK });
   const cancelTask = () => dispatch({ type: CANCEL_TASK });
 
-  console.log(model);
-
   return (
     <span className="task-info">
       <dl className="dl-horizontal">
@@ -85,6 +83,7 @@ export default view(({ model, dispatch }) => {
         <dt>Actions</dt>
         <dd className="actions">
           <ConfirmAction
+            model={model.confirmScheduleTask}
             dispatch={forwardTo(dispatch, CONFIRM_SCHEDULE_TASK)}
             buttonSize="xsmall"
             buttonStyle="primary"
@@ -103,6 +102,7 @@ export default view(({ model, dispatch }) => {
             buttonStyle="success"
             buttonSize="xsmall" />
           <ConfirmAction
+            model={model.confirmCancelTask}
             dispatch={forwardTo(dispatch, CONFIRM_CANCEL_TASK)}
             buttonSize="xsmall"
             buttonStyle="danger"

@@ -14,12 +14,13 @@ export default view((props) => {
       {...props}
       dispatch={forwardTo(dispatch, 'CONFIRM_ACTION')}
       model={model.confirmAction}
+      action={purge}
       buttonSize="xsmall"
       buttonStyle="danger"
       glyph="trash"
       label="Purge worker cache"
       success="Cache successfully purged!"
-      disabled={R.isNil(model.caches)}>
+      disabled={R.isEmpty(model.caches)}>
         <div>
           <p>Are you sure you wish to purge caches used in this task across all workers of this worker-type?</p>
           <p>Select the caches to purge:</p>

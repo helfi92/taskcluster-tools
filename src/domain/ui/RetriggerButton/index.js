@@ -11,6 +11,7 @@ export default view((props) => {
   return (
     <ConfirmAction
       {...props}
+      model={model.confirmAction}
       dispatch={forwardTo(dispatch, 'CONFIRM_ACTION')}
       glyph="repeat"
       label="Retrigger Task"

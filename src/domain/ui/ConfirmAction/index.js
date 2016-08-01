@@ -7,7 +7,7 @@ import Spinner from '../Spinner';
 export default view(({ dispatch, children, model, ...props }) => {
   const openModal = () => dispatch({ type: 'SHOW_CONFIRM_ACTION' });
   const closeModal = () => dispatch({ type: 'CLOSE_CONFIRM_ACTION' });
-  const executeAction = () => dispatch({ type: 'EXECUTE_ACTION' });
+  const executeAction = () => dispatch({ type: 'EXECUTE_ACTION', payload: props.action });
 
   return (
     <Button bsSize={props.buttonSize} bsStyle={props.buttonStyle} disabled={props.disabled} onClick={openModal}>

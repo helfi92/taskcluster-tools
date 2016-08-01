@@ -20,9 +20,8 @@ export default view(({ model, dispatch }) => {
 
   const { taskStatus, currentTab } = model;
   const changeTab = (e) => {
-    console.log(e);
     dispatch({ type: CHANGE_TAB, value: null });
-  }
+  };
   const [initialRuns, extraRuns] = R.splitAt(6, taskStatus.runs);
 
   return (

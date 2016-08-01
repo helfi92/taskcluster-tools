@@ -1,8 +1,9 @@
 import R from 'ramda';
-import { Updater } from 'redux-elm';
+import { Updater, wrapAction } from 'redux-elm';
 import { takeEvery } from 'redux-saga';
 import { fork, put, call, select } from 'redux-saga/effects';
-import init, { taskStatusStateLabel, purgeCacheModel, retriggerModel } from './model';
+import init, { taskStatusStateLabel } from './model';
+import confirmActionUpdater from '../ConfirmAction/updater';
 import retriggerButtonUpdater from '../RetriggerButton/updater';
 import purgeCacheButtonUpdater from '../PurgeCacheButton/updater';
 
@@ -13,6 +14,7 @@ import purgeCacheButtonUpdater from '../PurgeCacheButton/updater';
 
 export const LOAD_INFO = 'LOAD_INFO';
 export const UPDATE_TASK = 'UPDATE_TASK';
+export const TASK_UPDATE = 'TASK_UPDATE';
 export const SCHEDULE_TASK = 'SCHEDULE_TASK';
 export const CANCEL_TASK = 'CANCEL_TASK';
 export const RETRIGGER_BUTTON = 'TASK_INFO_RETRIGGER_BUTTON';
@@ -34,8 +36,10 @@ function* load() {
   });
 
   yield [
-    put({ type: RETRIGGER_BUTTON }),
-    put({ type: PURGE_CACHE_BUTTON })
+    put({ type: CONFIRM_SCHEDULE_TASK }),
+    put({ type: CONFIRM_CANCEL_TASK }),
+    put(wrapAction({ type: TASK_UPDATE, payload: task }, RETRIGGER_BUTTON)),
+    put(wrapAction({ type: TASK_UPDATE, payload: task }, PURGE_CACHE_BUTTON))
   ]
 }
 
@@ -47,17 +51,19 @@ function* listener() {
 }
 
 export default new Updater(init(), listener)
+  .case(CONFIRM_SCHEDULE_TASK, (model, action) => R.assoc('confirmScheduleTask',
+    confirmActionUpdater(model.confirmScheduleTask, action), model))
+  .case(CONFIRM_CANCEL_TASK, (model, action) => R.assoc('confirmCancelTask',
+    confirmActionUpdater(model.confirmCancelTask, action), model))
   .case(RETRIGGER_BUTTON, (model, action) => R.assoc('retriggerButton',
-    retriggerButtonUpdater(retriggerModel(model), action),
-    model))
+    retriggerButtonUpdater(model.retriggerButton, action), model))
   .case(PURGE_CACHE_BUTTON, (model, action) => R.assoc('purgeCacheButton',
-    purgeCacheButtonUpdater(purgeCacheModel(model), action),
-    model))
+    purgeCacheButtonUpdater(model.purgeCacheButton, action), model))
   .case(LOAD_INFO, (model, { payload }) => R.merge(model, {
     taskStatus: payload,
     taskLoaded: false,
     taskLoading: true
-  }, model))
+  }))
   .case(UPDATE_TASK, (model, { payload }) => R.merge(model, {
     label: taskStatusStateLabel[model.taskStatus.state],
     task: payload,

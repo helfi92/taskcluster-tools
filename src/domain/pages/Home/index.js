@@ -39,7 +39,7 @@ export default view(({ model }) => (
       {R.flatten(model.menu)
         .map((menuItem, index) => (
           <Col md={4} sm={6} key={index}>
-            <Link to={menuItem.path} className="home-entry">
+            <Link to={menuItem.path.replace(/\(([^)]+)\)/, '')} className="home-entry">
               <h4>{menuItem.title}</h4>
               <Icon name={menuItem.icon || 'wrench'} size="3x" className="pull-left" />
               <Markdown>{menuItem.description}</Markdown>
