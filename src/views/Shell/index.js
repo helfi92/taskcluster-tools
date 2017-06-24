@@ -1,6 +1,6 @@
 import React from 'react';
 import { hterm, lib } from 'hterm-umd';
-import { DockerExecClient } from 'docker-exec-websocket-server';
+import DockerExec from './dockerExec';
 import { dial } from 'ws-shell';
 
 const defaultCommand = [
@@ -56,7 +56,7 @@ class Shell extends React.PureComponent {
       // Create a shell client, with interface similar to child_process
       // With an additional method client.resize(cols, rows) for TTY sizing.
       if (this.props.v === '1') {
-        this.client = new DockerExecClient(options);
+        this.client = new DockerExec(options);
         await this.client.execute();
 
         // Wrap client.resize to switch argument ordering
