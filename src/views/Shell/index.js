@@ -32,6 +32,7 @@ class Shell extends React.PureComponent {
     const terminal = new hterm.Terminal('interactive');
 
     terminal.onTerminalReady = async () => {
+      const DECODER = new TextDecoder('utf-8');
       // We do this before we connect, so that the terminal window size is known
       // when we send the window size.
       const io = terminal.io.push();
@@ -77,8 +78,8 @@ class Shell extends React.PureComponent {
 
       this.client.resize(terminal.screenSize.width, terminal.screenSize.height);
       io.onTerminalResize = (c, r) => this.client.resize(c, r);
-      this.client.stdout.on('data', data => io.writeUTF8(data.toString('utf8')));
-      this.client.stderr.on('data', data => io.writeUTF8(data.toString('utf8')));
+      this.client.stdout.on('data', data => io.writeUTF8(DECODER.decode(data)));
+      this.client.stderr.on('data', data => io.writeUTF8(DECODER.decode(data)));
       this.client.stdout.resume();
       this.client.stderr.resume();
     };
