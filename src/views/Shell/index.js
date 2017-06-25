@@ -3,6 +3,8 @@ import { hterm, lib } from 'hterm-umd';
 import DockerExec from './dockerExec';
 import { dial } from 'ws-shell';
 
+const DECODER = new TextDecoder('utf-8');
+
 const defaultCommand = [
   'sh', '-c',
   [
@@ -32,7 +34,6 @@ class Shell extends React.PureComponent {
     const terminal = new hterm.Terminal('interactive');
 
     terminal.onTerminalReady = async () => {
-      const DECODER = new TextDecoder('utf-8');
       // We do this before we connect, so that the terminal window size is known
       // when we send the window size.
       const io = terminal.io.push();
