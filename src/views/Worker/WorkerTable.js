@@ -20,40 +20,16 @@ export default class WorkerTable extends React.PureComponent {
       filterStatus: 'all'
     };
   }
-  renderTaskMetadata = ({ metadata }, { taskGroupId, taskId }) => (
+  renderTaskDescription = description => (
     <Popover
-      className={styles.metadataPopover}
+      className={styles.taskPopover}
       id="popover-trigger-click-root-close"
-      title={
-        <a target="_blank" rel="noopener noreferrer" href={`/groups/${taskGroupId}/tasks/${taskId}`}>
-          {taskId}&nbsp;&nbsp;<Icon name="long-arrow-right" />
-        </a>
-      }>
+      title="Description">
       <div>
-        <Table responsive>
-          <thead>
-            <tr>
-              <td><strong>Name</strong></td>
-              <td><strong>Owner</strong></td>
-              <td><strong>Description</strong></td>
-            </tr>
-          </thead>
-
-          <tbody>
-            <tr>
-              <td>
-                <a target="_blank" rel="noopener noreferrer" href={metadata.source}>{metadata.name}</a>
-              </td>
-              <td>{metadata.owner}</td>
-              <td>
-                {metadata.description ?
-                  <Markdown>{metadata.description}</Markdown> :
-                  <Markdown>`-`</Markdown>
-                }
-              </td>
-            </tr>
-          </tbody>
-        </Table>
+        {description ?
+          <Markdown>{description}</Markdown> :
+          <Markdown>`-`</Markdown>
+        }
       </div>
     </Popover>
   );
@@ -61,23 +37,25 @@ export default class WorkerTable extends React.PureComponent {
   renderTask = ({ task, status }, index) => {
     const runId = status.runs.length - 1;
     const run = status.runs[runId];
-    const metadata = this.renderTaskMetadata(task, status);
+    const description = this.renderTaskDescription(task.metadata.description);
 
     return (
       <tr key={`recent-task-${index}`}>
         <td><Label bsSize="sm" bsStyle={labels[status.state]}>{status.state}</Label></td>
         <td>
-          <OverlayTrigger trigger="click" rootClose placement="bottom" overlay={metadata}>
-            <a
-              target="_blank"
-              role="button"
-              rel="noopener noreferrer">
-              {status.taskId}
-            </a>
+          <a target="_blank" rel="noopener noreferrer" href={`/groups/${status.taskGroupId}/tasks/${status.taskId}`}>
+            {status.taskId}
+          </a>
+        </td>
+        <td>
+          <a target="_blank" rel="noopener noreferrer" href={task.metadata.source}>
+            {task.metadata.name}
+          </a>
+          &nbsp;&nbsp;
+          <OverlayTrigger trigger="click" rootClose placement="bottom" overlay={description}>
+            <Icon role="button" name="info-circle" />
           </OverlayTrigger>
         </td>
-        <td>{status.schedulerId}</td>
-        <td>{run.scheduled ? moment(run.scheduled).fromNow() : '-'}</td>
         <td>{run.started ? moment(run.started).fromNow() : '-'}</td>
         <td>{run.resolved ? moment(run.resolved).fromNow() : '-'}</td>
       </tr>
@@ -95,7 +73,13 @@ export default class WorkerTable extends React.PureComponent {
     }
 
     const sort = tasks => tasks
-      .sort((a, b) => a.task.metadata.name.localeCompare(b.task.metadata.name, { sensitivity: 'base' }));
+      .sort((a, b) => {
+        const runIdA = a.status.runs.length - 1;
+        const runIdB = b.status.runs.length - 1;
+
+        return moment(a.status.runs[runIdA].started).diff(moment(b.status.runs[runIdB].started)) < 0 ? 1 : -1;
+      }
+    );
 
     if (filterStatus !== 'all') {
       return sort(tasks.filter(task => task.status.state === filterStatus));
@@ -110,7 +94,7 @@ export default class WorkerTable extends React.PureComponent {
     const { filterStatus } = this.state;
 
     return (
-      <div className={styles.recentTasksTable}>
+      <div className={styles.tasksTable}>
         <hr />
         <h5>Recent Task IDs claimed</h5>
         <Table responsive>
@@ -134,8 +118,7 @@ export default class WorkerTable extends React.PureComponent {
                 </ButtonToolbar>
               </th>
               <th>Task ID</th>
-              <th>Scheduler ID</th>
-              <th>Scheduled</th>
+              <th>Name</th>
               <th>Started</th>
               <th>Resolved</th>
             </tr>

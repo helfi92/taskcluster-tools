@@ -1,11 +1,11 @@
 import React, { PureComponent } from 'react';
 import Icon from 'react-fontawesome';
 import { string, array, func } from 'prop-types';
-import { InputGroup, FormControl, Form, Button } from 'react-bootstrap';
+import { InputGroup, FormControl, Form, Button, DropdownButton, MenuItem } from 'react-bootstrap';
 import { Combobox } from 'react-input-enhancements';
 import styles from './styles.css';
 
-class SearchForm extends PureComponent {
+export default class SearchForm extends PureComponent {
   static propTypes = {
     provisioners: array.isRequired,
     workerTypes: array.isRequired,
@@ -35,35 +35,16 @@ class SearchForm extends PureComponent {
 
   onProvisionerSelect = (provisionerId) => {
     this.props.updateURI(provisionerId);
+    this.setState({ workerGroupInput: '', workerIdInput: '' });
   };
 
   onWorkerTypeSelect = (workerType) => {
     this.props.updateURI(this.props.provisionerId, workerType);
   };
 
-  renderProvisionerDropdown = () => {
-    const options = this.props.provisioners.map(provisioner => provisioner.provisionerId);
-
-    return (
-      <div>
-        <Combobox
-          value={this.props.provisionerId}
-          options={options}
-          onSelect={this.onProvisionerSelect}>
-          {props => (
-            <FormControl
-              {...props}
-              bsSize="small"
-              type="text"
-              placeholder="Provisioner: None" />
-          )}
-        </Combobox>
-      </div>
-    );
-  };
-
   renderWorkerTypeDropdown = () => {
     const options = this.props.workerTypes.map(workerType => workerType.workerType);
+    const disabled = !this.props.provisionerId || !options.length;
 
     return (
       <div>
@@ -74,7 +55,7 @@ class SearchForm extends PureComponent {
           {props => (
             <FormControl
               {...props}
-              disabled={!this.props.provisionerId}
+              disabled={disabled}
               bsSize="small"
               type="text"
               placeholder="Worker-type: None" />
@@ -95,23 +76,38 @@ class SearchForm extends PureComponent {
     return (
       <div>
         <Form className={styles.searchForm} horizontal onSubmit={this.onSubmit}>
-          {this.renderProvisionerDropdown()}
+          <DropdownButton
+            id="provisioner-dropdown"
+            bsSize="small"
+            title={`Provisioner: ${this.props.provisionerId || 'None'}`}
+            onSelect={this.onProvisionerSelect}>
+            {this.props.provisioners.map(({ provisionerId }, key) => (
+              <MenuItem eventKey={provisionerId} key={`provisioner-dropdown-${key}`}>
+                {provisionerId}
+              </MenuItem>
+            ))}
+          </DropdownButton>
+
           {this.renderWorkerTypeDropdown()}
 
           <div className={styles.typeInput}>
             <InputGroup bsSize="sm">
               <InputGroup.Addon>Worker Group</InputGroup.Addon>
-              <FormControl disabled={!workerType} value={this.state.workerGroupInput} onChange={this.workerGroupOnChange} type="text" />
+              <FormControl
+                disabled={!workerType}
+                value={this.state.workerGroupInput}
+                onChange={this.workerGroupOnChange} type="text" />
             </InputGroup>
           </div>
-
           <div className={styles.typeInput}>
             <InputGroup bsSize="sm">
               <InputGroup.Addon>Worker ID</InputGroup.Addon>
-              <FormControl disabled={!workerType} value={this.state.workerIdInput} onChange={this.workerIdOnChange} type="text" />
+              <FormControl
+                disabled={!workerType}
+                value={this.state.workerIdInput}
+                onChange={this.workerIdOnChange} type="text" />
             </InputGroup>
           </div>
-
           <div>
             <Button disabled={!valid} type="submit" bsSize="sm">
               <Icon name="search" /> Inspect
@@ -122,5 +118,3 @@ class SearchForm extends PureComponent {
     );
   }
 }
-
-export default SearchForm;

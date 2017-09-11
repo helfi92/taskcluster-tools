@@ -8,14 +8,6 @@
   border-top-style: hidden;
 }
 
-.metadataTable > tbody > tr > td {
-  padding: 5px 0;
-}
-
-.recentTasksTable > div {
-  min-height: 300px;
-}
-
 .searchForm {
   display: flex;
   flex-wrap: wrap;
@@ -31,6 +23,10 @@
   min-width: 300px;
 }
 
-.metadataPopover {
+.taskPopover {
   max-width: 600px;
+}
+
+.tasksTable > div {
+  min-height: 300px;
 }

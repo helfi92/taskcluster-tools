@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React from 'react';
 import moment from 'moment';
 import { Table, Button, ButtonToolbar } from 'react-bootstrap';
 import HelmetTitle from '../../components/HelmetTitle';
@@ -8,7 +8,7 @@ import SearchForm from './SearchForm';
 import WorkerTable from './WorkerTable';
 import styles from './styles.css';
 
-class WorkerManager extends Component {
+class WorkerManager extends React.PureComponent {
   constructor(props) {
     super(props);
 
@@ -38,32 +38,52 @@ class WorkerManager extends Component {
 
   componentWillReceiveProps(nextProps) {
     if (this.props.provisionerId !== nextProps.provisionerId) {
-      this.loadWorkerTypes(nextProps);
+      this.setState({ workerTypes: [] }, () => this.loadWorkerTypes(nextProps));
     }
   }
 
-  async loadProvisioners() {
-    this.setState({ provisioners: [] }, async () => {
-      try {
-        const { provisioners } = await this.props.queue.listProvisioners();
+  async loadProvisioners(token) {
+    try {
+      const { provisioners, continuationToken } = await this.props.queue
+        .listProvisioners(token ? { continuationToken: token, limit: 100 } : { limit: 100 });
 
-        this.setState({ provisioners });
-      } catch (err) {
-        this.setState({ provisioners: null, error: err });
+      this.setState({
+        provisioners: this.state.provisioners ?
+          this.state.provisioners.concat(provisioners) :
+          provisioners
+      });
+
+      if (continuationToken) {
+        this.loadProvisioners(continuationToken);
       }
-    });
+    } catch (err) {
+      this.setState({
+        provisioners: [],
+        error: err
+      });
+    }
   }
 
-  async loadWorkerTypes({ provisionerId }) {
-    this.setState({ workerTypes: [], error: null }, async () => {
-      try {
-        const { workerTypes } = await this.props.queue.listWorkerTypes(provisionerId);
+  async loadWorkerTypes({ provisionerId }, token) {
+    try {
+      const { workerTypes, continuationToken } = await this.props.queue
+        .listWorkerTypes(provisionerId, token ? { continuationToken: token, limit: 100 } : { limit: 100 });
 
-        this.setState({ workerTypes, error: null });
-      } catch (err) {
-        this.setState({ workerTypes: [], error: err });
+      this.setState({
+        workerTypes: this.state.workerTypes ?
+          this.state.workerTypes.concat(workerTypes) :
+          workerTypes
+      });
+
+      if (continuationToken) {
+        this.loadProvisioners({ provisionerId }, continuationToken);
       }
-    });
+    } catch (err) {
+      this.setState({
+        workerTypes: [],
+        error: err
+      });
+    }
   }
 
   loadWorker = async (provisionerId, workerType, workerGroup, workerId) => {
@@ -81,10 +101,10 @@ class WorkerManager extends Component {
 
   loadRecentTasks = taskIds => (
     Promise.all(taskIds.map(async (taskId) => {
-      const task = await this.props.queue.task(taskId);
-      const { status } = await this.props.queue.status(taskId);
+      const task = this.props.queue.task(taskId);
+      const status = this.props.queue.status(taskId);
 
-      return { task, status };
+      return { task: await task, status: (await status).status };
     }))
   );
 
@@ -96,71 +116,48 @@ class WorkerManager extends Component {
     );
   };
 
-  renderHeader = () => (
-    <div key="header">
-      <HelmetTitle title="Worker Explorer" />
-      <h4>Worker Explorer</h4>
-    </div>
-  );
-
-  renderSearchForm = () => (
-    <SearchForm
-      key="input-form"
-      provisioners={this.state.provisioners}
-      workerTypes={this.state.workerTypes}
-      provisionerId={this.props.provisionerId}
-      workerType={this.props.workerType}
-      workerGroup={this.props.workerGroup}
-      workerId={this.props.workerId}
-      updateURI={this.updateURI}
-      loadWorker={this.loadWorker} />
-  );
-
-  renderWorkerMetadata = () => (
-    <div key="worker-metadata">
-      <Table className={styles.metadataTable} condensed responsive>
-        <tbody>
-          <tr>
-            <td>First Claim</td>
-            <td>{moment(this.state.worker.firstClaim).fromNow()}</td>
-          </tr>
-          <tr>
-            <td style={{ verticalAlign: 'inherit' }}>Actions</td>
-            <td>
-              <ButtonToolbar>
-                <Button disabled title="Coming soon!" bsSize="small" bsStyle="info">Reboot</Button>
-                <Button disabled title="Coming soon!" bsSize="small" bsStyle="warning">Disable</Button>
-                <Button disabled title="Coming soon!" bsSize="small" bsStyle="danger">Kill</Button>
-              </ButtonToolbar>
-            </td>
-          </tr>
-        </tbody>
-      </Table>
-    </div>
-  );
-
   render() {
-    if (this.state.error) {
-      return (
-        <div>
-          {[
-            this.renderHeader(),
-            this.renderSearchForm(),
-            <Error key="error" error={this.state.error} />
-          ]}
-        </div>
-      );
-    }
-
     return (
       <div>
-        {[
-          this.renderHeader(),
-          this.renderSearchForm(),
-          this.state.loading ? <Spinner key="spinner" /> : null,
-          this.state.worker && this.renderWorkerMetadata(),
-          this.state.worker && <WorkerTable tasks={this.state.recentTasks} key="worker-table" />
-        ]}
+        <div key="header">
+          <HelmetTitle title="Worker Explorer" />
+          <h4>Worker Explorer</h4>
+        </div>
+        <SearchForm
+          key="input-form"
+          provisioners={this.state.provisioners}
+          workerTypes={this.state.workerTypes}
+          provisionerId={this.props.provisionerId}
+          workerType={this.props.workerType}
+          workerGroup={this.props.workerGroup}
+          workerId={this.props.workerId}
+          updateURI={this.updateURI}
+          loadWorker={this.loadWorker} />
+        {this.state.error && <Error key="error" error={this.state.error} />}
+        {this.state.loading && <Spinner key="spinner" />}
+        {this.state.worker &&
+          <div>
+            <Table className={styles.metadataTable} condensed responsive>
+              <tbody>
+                <tr>
+                  <td>First Claim</td>
+                  <td>{moment(this.state.worker.firstClaim).fromNow()}</td>
+                </tr>
+                <tr>
+                  <td style={{ verticalAlign: 'inherit' }}>Actions</td>
+                  <td>
+                    <ButtonToolbar>
+                      <Button disabled title="Coming soon!" bsSize="small" bsStyle="info">Reboot</Button>
+                      <Button disabled title="Coming soon!" bsSize="small" bsStyle="warning">Disable</Button>
+                      <Button disabled title="Coming soon!" bsSize="small" bsStyle="danger">Kill</Button>
+                    </ButtonToolbar>
+                  </td>
+                </tr>
+              </tbody>
+            </Table>
+          </div>
+        }
+        {this.state.worker && <WorkerTable tasks={this.state.recentTasks} />}
       </div>
     );
   }
